@@ -94,7 +94,7 @@ If you fork this project and plan to build your own copy, update these values to
 ## Technical Notes
 
 - Relative paths are based on the current Finder window folder (`targetedURL`); falls back to absolute path when unavailable
-- Configuration is shared between the app and extension via JSON files in the user's Application Support directory
+- Configuration is shared between the app and extension via JSON files in the user's Application Support directory (`SharedStore` resolves the real home with `getpwuid`; the extension sandbox must use a **home-relative** temporary exception for `Library/Application Support/Flicker/` — do not hardcode `/Users/<developer>/...`, or other users fall back to defaults)
 - Finder Sync extensions are hosted by macOS; quitting Flicker does not unload the extension. To temporarily hide Flicker's menu output, disable **Enable Finder Context Menu** in Action Control
 - Minimum deployment target: macOS 14.0 (Sonoma)
 

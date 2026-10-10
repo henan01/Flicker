@@ -94,7 +94,7 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 ## 技术说明
 
 - 相对路径基准为当前 Finder 窗口文件夹（`targetedURL`），无法获取时回退为绝对路径
-- 配置通过用户 Application Support 目录中的 JSON 文件在 App 与扩展间共享
+- 配置通过用户 Application Support 目录中的 JSON 文件在 App 与扩展间共享（`SharedStore` 用 `getpwuid` 解析真实主目录；扩展沙盒通过 **home-relative** temporary exception 授权 `Library/Application Support/Flicker/`，勿写死 `/Users/<开发者>/...`，否则其他用户读不到配置会回退默认值）
 - Finder Sync 扩展由 macOS 托管，退出 Flicker 主 App 不等于卸载扩展；如需临时关闭 Flicker 菜单，可在「操作控制」中关闭「启用 Finder 右键菜单」
 - 最低系统版本 macOS 14.0（Sonoma）
 
