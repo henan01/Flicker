@@ -12,18 +12,49 @@ CONFIG="Release"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_PATH="$BUILD_DIR/Flicker.app"
 VERSION_SUFFIX="${1:-}"
+LOG_FILE="$BUILD_DIR/xcodebuild.log"
 
+echo "==> Xcode: $(xcodebuild -version | tr '\n' ' ')"
 echo "==> Release 构建"
 # 手动清理 build 目录（xcodebuild clean 无法删除自定义 CONFIGURATION_BUILD_DIR）
 rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+
+set +e
 xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIG" \
+  -destination 'generic/platform=macOS' \
   -derivedDataPath "$BUILD_DIR/DerivedData" \
-  CONFIGURATION_BUILD_DIR="$BUILD_DIR" build
+  CONFIGURATION_BUILD_DIR="$BUILD_DIR" \
+  CODE_SIGN_IDENTITY="-" \
+  CODE_SIGNING_ALLOWED=YES \
+  CODE_SIGNING_REQUIRED=NO \
+  DEVELOPMENT_TEAM="" \
+  COMPILER_INDEX_STORE_ENABLE=NO \
+  build 2>&1 | tee "$LOG_FILE"
+XCODE_STATUS=${pipestatus[1]}
+set -e
+
+if [[ "$XCODE_STATUS" -ne 0 ]]; then
+  echo "==> xcodebuild failed ($XCODE_STATUS). Relevant lines:" >&2
+  grep -E 'error:|fatal error:|CODE_SIGN|Provisioning|errSec|entitlement|BUILD FAILED' "$LOG_FILE" | tail -80 >&2 || true
+  exit "$XCODE_STATUS"
+fi
 
 if [[ ! -d "$APP_PATH" ]]; then
   echo "构建产物未找到: $APP_PATH" >&2
-  exit 1
+  # Sometimes Xcode nests under Release/
+  if [[ -d "$BUILD_DIR/Release/Flicker.app" ]]; then
+    APP_PATH="$BUILD_DIR/Release/Flicker.app"
+  else
+    find "$BUILD_DIR" -name 'Flicker.app' -maxdepth 3 2>/dev/null >&2 || true
+    exit 1
+  fi
 fi
+
+# Ad-hoc re-sign app + appex so Finder Sync can load (CI uses CODE_SIGNING_REQUIRED=NO)
+echo "==> Ad-hoc codesign"
+codesign --force --deep --sign - --timestamp=none "$APP_PATH/Contents/PlugIns/FlickerExtension.appex" 2>/dev/null || true
+codesign --force --deep --sign - --timestamp=none "$APP_PATH"
 
 # 从构建产物中提取版本号
 APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")
