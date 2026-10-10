@@ -70,7 +70,16 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 ```bash
 ./scripts/build_dmg.sh
 # 产物位于 dist/Flicker-<version>.dmg
+
+# 可选后缀（便于区分测试包）
+./scripts/build_dmg.sh sandbox-fix
+# → dist/Flicker-<version>-sandbox-fix.dmg
 ```
+
+GitHub Actions（`.github/workflows/release-dmg.yml`）会在推送 / 手动触发时自动构建 DMG：
+
+- **Actions → Build DMG → 产物** 可直接下载 artifact
+- 推送 `v*` tag 时会自动创建 GitHub Release 并附带 DMG
 
 ### 首次启用扩展
 

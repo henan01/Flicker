@@ -1,7 +1,8 @@
 #!/bin/zsh
 # 打包 Flicker.dmg
-# 用法: ./scripts/build_dmg.sh
+# 用法: ./scripts/build_dmg.sh [suffix]
 # 产物: dist/Flicker-<version>.dmg
+#       dist/Flicker-<version>-<suffix>.dmg  （传入 suffix 时）
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,6 +11,8 @@ SCHEME="Flicker"
 CONFIG="Release"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_PATH="$BUILD_DIR/Flicker.app"
+VERSION_SUFFIX="${1:-}"
+
 echo "==> Release 构建"
 # 手动清理 build 目录（xcodebuild clean 无法删除自定义 CONFIGURATION_BUILD_DIR）
 rm -rf "$BUILD_DIR"
@@ -26,7 +29,11 @@ fi
 APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")
 echo "==> 应用版本: $APP_VERSION"
 
-DMG_NAME="Flicker-${APP_VERSION}.dmg"
+if [[ -n "$VERSION_SUFFIX" ]]; then
+  DMG_NAME="Flicker-${APP_VERSION}-${VERSION_SUFFIX}.dmg"
+else
+  DMG_NAME="Flicker-${APP_VERSION}.dmg"
+fi
 DMG_PATH="$PROJECT_DIR/dist/$DMG_NAME"
 
 echo "==> 准备 DMG 暂存目录"
