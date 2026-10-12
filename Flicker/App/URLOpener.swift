@@ -145,12 +145,15 @@ enum URLOpener {
     
     /// 隐藏应用，避免主窗口抢占焦点。
     private static func hideApp() {
-        if AppDelegate.launchedByURL {
-            // 冷启动场景：保持 accessory 策略，隐藏残留窗口。
-            NSApp.windows.forEach { $0.orderOut(nil) }
-        } else {
-            // 已在运行的场景：隐藏整个应用，让用户继续留在 Finder。
-            NSApp.hide(nil)
+        // AppKit UI 必须在主线程；URL 回调可能来自非隔离上下文（Swift 6 / Xcode 16.4）。
+        DispatchQueue.main.async {
+            if AppDelegate.launchedByURL {
+                // 冷启动场景：保持 accessory 策略，隐藏残留窗口。
+                NSApp.windows.forEach { $0.orderOut(nil) }
+            } else {
+                // 已在运行的场景：隐藏整个应用，让用户继续留在 Finder。
+                NSApp.hide(nil)
+            }
         }
     }
 }
