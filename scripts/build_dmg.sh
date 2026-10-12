@@ -21,10 +21,12 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 set +e
+# Prefer current Mac arch for CI/local speed; universal not required for testing.
 xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIG" \
-  -destination 'generic/platform=macOS' \
+  -destination "platform=macOS,arch=$(uname -m)" \
   -derivedDataPath "$BUILD_DIR/DerivedData" \
   CONFIGURATION_BUILD_DIR="$BUILD_DIR" \
+  ONLY_ACTIVE_ARCH=YES \
   CODE_SIGN_IDENTITY="-" \
   CODE_SIGNING_ALLOWED=YES \
   CODE_SIGNING_REQUIRED=NO \
@@ -51,10 +53,16 @@ if [[ ! -d "$APP_PATH" ]]; then
   fi
 fi
 
-# Ad-hoc re-sign app + appex so Finder Sync can load (CI uses CODE_SIGNING_REQUIRED=NO)
+# Ad-hoc re-sign app + appex so Finder Sync can load (CI uses CODE_SIGNING_REQUIRED=NO).
+# Must re-apply entitlements + hardened runtime — signing without them drops the extension sandbox.
 echo "==> Ad-hoc codesign"
-codesign --force --deep --sign - --timestamp=none "$APP_PATH/Contents/PlugIns/FlickerExtension.appex" 2>/dev/null || true
-codesign --force --deep --sign - --timestamp=none "$APP_PATH"
+EXT_ENTITLEMENTS="$PROJECT_DIR/FlickerExtension/FlickerExtension.entitlements"
+APP_ENTITLEMENTS="$PROJECT_DIR/Flicker/Resources/Flicker.entitlements"
+xattr -cr "$APP_PATH" 2>/dev/null || true
+codesign --force --sign - --options runtime --entitlements "$EXT_ENTITLEMENTS" --timestamp=none \
+  "$APP_PATH/Contents/PlugIns/FlickerExtension.appex"
+codesign --force --sign - --options runtime --entitlements "$APP_ENTITLEMENTS" --timestamp=none \
+  "$APP_PATH"
 
 # 从构建产物中提取版本号
 APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")

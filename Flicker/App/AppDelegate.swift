@@ -28,6 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // 配置迁到扩展 Container，并确保本包 Finder Sync 扩展被系统启用。
+        FinderExtensionRegistrar.prepareOnLaunch()
+
         if Self.launchedByURL {
             // 静默运行：隐藏窗口，不应用界面设置，仅同步登录项。
             NSApp.windows.forEach { $0.orderOut(nil) }

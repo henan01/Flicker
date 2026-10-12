@@ -13,6 +13,8 @@ struct OpenWithPanel: View {
     @State private var showingAddSheet = false
     @State private var editing: AppEntry?
     @State private var pendingDelete: AppEntry?
+    @State private var showingRepairAlert = false
+    @State private var repairAlertMessage = ""
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -95,6 +97,17 @@ struct OpenWithPanel: View {
             }
             .help("打开系统设置中的「访达扩展」开关，管理 Flicker 的系统扩展状态")
 
+            Button {
+                let ok = FinderExtensionRegistrar.reregisterEmbeddedExtension()
+                repairAlertMessage = ok
+                    ? "已重新注册本机 Flicker 扩展。若右键菜单仍无，请在「访达扩展」中确认 Flicker 已勾选，或执行 killall Finder 后重试。"
+                    : "重新注册失败。请到「系统设置 → 隐私与安全性 → 扩展 → 访达」手动开启 Flicker。"
+                showingRepairAlert = true
+            } label: {
+                Label("修复扩展注册", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .help("当本地存在多份 Flicker 构建导致菜单消失时，重新注册当前 App 内的扩展")
+
             Spacer()
 
             Button {
@@ -106,6 +119,11 @@ struct OpenWithPanel: View {
             .buttonStyle(.borderedProminent)
         }
         .padding(12)
+        .alert("扩展注册", isPresented: $showingRepairAlert) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(repairAlertMessage)
+        }
     }
 }
 
