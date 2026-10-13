@@ -32,10 +32,18 @@ jobs:
         run: |
           echo "Available Xcode apps:"
           ls -1 /Applications | grep -i '^Xcode' || true
-          if [[ -d /Applications/Xcode_16.4.app ]]; then
-            sudo xcode-select -s /Applications/Xcode_16.4.app
-          elif [[ -d /Applications/Xcode.app ]]; then
-            sudo xcode-select -s /Applications/Xcode.app
+          # 优先匹配 Xcode_16*.app，若无则挑选版本号最高的 Xcode_*.app，最后回退到系统默认 Xcode.app
+          XCODE_CANDIDATE=""
+          for candidate in /Applications/Xcode_16*.app /Applications/Xcode_*.app /Applications/Xcode.app; do
+            if [[ -d "$candidate" ]]; then
+              XCODE_CANDIDATE="$candidate"
+              break
+            fi
+          done
+
+          if [[ -n "$XCODE_CANDIDATE" ]]; then
+            echo "Selecting $XCODE_CANDIDATE"
+            sudo xcode-select -s "$XCODE_CANDIDATE"
           else
             echo "No Xcode.app found" >&2
             exit 1
