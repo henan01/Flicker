@@ -99,9 +99,16 @@ struct OpenWithPanel: View {
 
             Button {
                 let ok = FinderExtensionRegistrar.reregisterEmbeddedExtension()
-                repairAlertMessage = ok
-                    ? "已重新注册本机 Flicker 扩展。若右键菜单仍无，请在「访达扩展」中确认 Flicker 已勾选，或执行 killall Finder 后重试。"
+                if ok {
+                    FinderExtensionRegistrar.restartFinder()
+                }
+                var msg = ok
+                    ? "已重新注册本机 Flicker 扩展并刷新访达。请在访达中右键任意文件测试菜单。"
                     : "重新注册失败。请到「系统设置 → 隐私与安全性 → 扩展 → 访达」手动开启 Flicker。"
+                if FinderExtensionRegistrar.isAppTranslocated {
+                    msg += "\n\n提示：检测到当前应用处于临时隔离环境，请将 Flicker.app 移动至「应用程序」(/Applications) 目录后运行，以确保系统访达扩展稳定加载。"
+                }
+                repairAlertMessage = msg
                 showingRepairAlert = true
             } label: {
                 Label("修复扩展注册", systemImage: "arrow.triangle.2.circlepath")

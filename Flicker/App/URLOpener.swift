@@ -53,7 +53,7 @@ enum URLOpener {
 
         // 容器 App 非沙盒，可自由用任意应用打开任意文件。
         let config = NSWorkspace.OpenConfiguration()
-        config.activates = false   // 不要激活目标应用的窗口
+        config.activates = true   // 激活目标应用的窗口，提升交互体验
         NSWorkspace.shared.open([targetURL], withApplicationAt: appURL, configuration: config) { _, error in
             if let error {
                 Log.error("open via container failed: \(error.localizedDescription)")
