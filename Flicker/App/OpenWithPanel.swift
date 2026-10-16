@@ -98,10 +98,7 @@ struct OpenWithPanel: View {
             .help("打开系统设置中的「访达扩展」开关，管理 Flicker 的系统扩展状态")
 
             Button {
-                let ok = FinderExtensionRegistrar.reregisterEmbeddedExtension()
-                if ok {
-                    FinderExtensionRegistrar.restartFinder()
-                }
+                let ok = FinderExtensionRegistrar.performFullRepair(restartFinderOnSuccess: true)
                 var msg = ok
                     ? "已重新注册本机 Flicker 扩展并刷新访达。请在访达中右键任意文件测试菜单。"
                     : "重新注册失败。请到「系统设置 → 隐私与安全性 → 扩展 → 访达」手动开启 Flicker。"
